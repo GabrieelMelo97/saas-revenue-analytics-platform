@@ -18,6 +18,11 @@ output "cloud_run_job_name" {
   description = "Serverless dbt runner Cloud Run Job"
 }
 
+output "dashboard_url" {
+  value       = module.compute.dashboard_url
+  description = "HTTPS URL of the Serverless Streamlit BI Dashboard on Cloud Run"
+}
+
 output "service_accounts" {
   value = {
     ingestion  = module.iam.ingestion_sa_email

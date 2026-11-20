@@ -18,6 +18,17 @@ variable "dbt_runner_sa_email" {
   description = "Service Account email for the Cloud Run Job"
 }
 
+variable "bi_reader_sa_email" {
+  type        = string
+  description = "Least-privilege read-only Service Account email for the BI Dashboard Cloud Run Service"
+}
+
+variable "allow_unauthenticated_dashboard" {
+  type        = bool
+  default     = false
+  description = "Allow public HTTPS access to the portfolio Streamlit dashboard (opt-in)"
+}
+
 variable "raw_bucket_name" {
   type        = string
   description = "GCS raw bucket name"
@@ -129,10 +140,82 @@ resource "google_cloud_scheduler_job" "daily_dbt_trigger" {
   }
 }
 
+resource "google_cloud_run_v2_service" "dashboard" {
+  project  = var.project_id
+  name     = "saas-revenue-dashboard-${var.environment}"
+  location = var.region
+  ingress  = "INGRESS_TRAFFIC_ALL"
+  labels   = var.labels
+
+  template {
+    service_account = var.bi_reader_sa_email
+
+    scaling {
+      min_instance_count = 0
+      max_instance_count = 2
+    }
+
+    containers {
+      image   = var.container_image
+      command = ["streamlit"]
+      args = [
+        "run",
+        "src/saas_revenue/dashboard.py",
+        "--server.port=8080",
+        "--server.address=0.0.0.0",
+        "--server.headless=true",
+      ]
+
+      ports {
+        container_port = 8080
+      }
+
+      resources {
+        limits = {
+          cpu    = "1"
+          memory = "1Gi"
+        }
+      }
+
+      env {
+        name  = "APP_ENV"
+        value = var.environment
+      }
+      env {
+        name  = "TARGET_BACKEND"
+        value = "gcp"
+      }
+      env {
+        name  = "GCP_PROJECT_ID"
+        value = var.project_id
+      }
+      env {
+        name  = "GCP_BQ_DATASET_MARTS"
+        value = var.bq_dataset_marts
+      }
+    }
+  }
+}
+
+resource "google_cloud_run_v2_service_iam_member" "dashboard_public" {
+  count = var.allow_unauthenticated_dashboard ? 1 : 0
+
+  project  = var.project_id
+  location = var.region
+  name     = google_cloud_run_v2_service.dashboard.name
+  role     = "roles/run.invoker"
+  member   = "allUsers"
+}
+
 output "artifact_registry_repo" {
   value = google_artifact_registry_repository.dbt_images.name
 }
 
 output "cloud_run_job_name" {
   value = google_cloud_run_v2_job.dbt_pipeline.name
+}
+
+output "dashboard_url" {
+  value       = google_cloud_run_v2_service.dashboard.uri
+  description = "HTTPS URL of the Serverless Streamlit BI Dashboard on Cloud Run"
 }
