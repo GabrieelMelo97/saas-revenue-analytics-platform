@@ -1,0 +1,46 @@
+version: 2
+
+models:
+  - name: int_account_monthly_mrr
+    description: "Complete monthly spine per account from first active month through latest month."
+    columns:
+      - name: account_id
+        tests:
+          - not_null
+      - name: revenue_month
+        tests:
+          - not_null
+
+  - name: int_mrr_movements
+    description: "Classifies monthly MRR into New, Expansion, Contraction, Churn, Reactivation, Retained, or Inactive."
+    columns:
+      - name: mrr_waterfall_id
+        tests:
+          - unique
+          - not_null
+      - name: movement_type
+        tests:
+          - accepted_values:
+              values: ["new", "expansion", "contraction", "churn", "reactivation", "retained", "inactive"]
+
+unit_tests:
+  - name: test_mrr_waterfall_lifecycle_classification
+    description: "Verifies exact SaaS accounting classification for New, Expansion, Contraction, Churn, Inactive, and Reactivation."
+    model: int_mrr_movements
+    given:
+      - input: ref('int_account_monthly_mrr')
+        rows:
+          - {account_id: "ACC-00001", first_active_month: "2025-01-01", revenue_month: "2025-01-01", plan_tier: "Starter", seats: 5, beginning_mrr: 0.0, ending_mrr: 199.0}
+          - {account_id: "ACC-00001", first_active_month: "2025-01-01", revenue_month: "2025-02-01", plan_tier: "Growth", seats: 10, beginning_mrr: 199.0, ending_mrr: 599.0}
+          - {account_id: "ACC-00001", first_active_month: "2025-01-01", revenue_month: "2025-03-01", plan_tier: "Starter", seats: 5, beginning_mrr: 599.0, ending_mrr: 199.0}
+          - {account_id: "ACC-00001", first_active_month: "2025-01-01", revenue_month: "2025-04-01", plan_tier: "Churned", seats: 0, beginning_mrr: 199.0, ending_mrr: 0.0}
+          - {account_id: "ACC-00001", first_active_month: "2025-01-01", revenue_month: "2025-05-01", plan_tier: "Churned", seats: 0, beginning_mrr: 0.0, ending_mrr: 0.0}
+          - {account_id: "ACC-00001", first_active_month: "2025-01-01", revenue_month: "2025-06-01", plan_tier: "Growth", seats: 8, beginning_mrr: 0.0, ending_mrr: 599.0}
+    expect:
+      rows:
+        - {account_id: "ACC-00001", revenue_month: "2025-01-01", new_mrr: 199.0, expansion_mrr: 0.0, contraction_mrr: 0.0, churned_mrr: 0.0, reactivation_mrr: 0.0, movement_type: "new"}
+        - {account_id: "ACC-00001", revenue_month: "2025-02-01", new_mrr: 0.0, expansion_mrr: 400.0, contraction_mrr: 0.0, churned_mrr: 0.0, reactivation_mrr: 0.0, movement_type: "expansion"}
+        - {account_id: "ACC-00001", revenue_month: "2025-03-01", new_mrr: 0.0, expansion_mrr: 0.0, contraction_mrr: 400.0, churned_mrr: 0.0, reactivation_mrr: 0.0, movement_type: "contraction"}
+        - {account_id: "ACC-00001", revenue_month: "2025-04-01", new_mrr: 0.0, expansion_mrr: 0.0, contraction_mrr: 0.0, churned_mrr: 199.0, reactivation_mrr: 0.0, movement_type: "churn"}
+        - {account_id: "ACC-00001", revenue_month: "2025-05-01", new_mrr: 0.0, expansion_mrr: 0.0, contraction_mrr: 0.0, churned_mrr: 0.0, reactivation_mrr: 0.0, movement_type: "inactive"}
+        - {account_id: "ACC-00001", revenue_month: "2025-06-01", new_mrr: 0.0, expansion_mrr: 0.0, contraction_mrr: 0.0, churned_mrr: 0.0, reactivation_mrr: 599.0, movement_type: "reactivation"}

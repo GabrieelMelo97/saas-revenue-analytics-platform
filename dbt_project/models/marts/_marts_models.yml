@@ -1,0 +1,104 @@
+version: 2
+
+groups:
+  - name: revenue_analytics
+    owner:
+      name: Gabriel Melo
+      email: gabrielmelo_@outlook.com
+
+models:
+  - name: dim_accounts
+    description: "Governed B2B customer dimension enriched with lifecycle status and lifetime MRR."
+    group: revenue_analytics
+    access: public
+    columns:
+      - name: account_id
+        tests:
+          - unique
+          - not_null
+      - name: current_status
+        tests:
+          - accepted_values:
+              values: ["active", "churned"]
+
+  - name: fct_mrr_waterfall
+    description: >-
+      Single Source of Truth for monthly SaaS MRR Waterfall at account-month granularity.
+      Enforces strict data contract and powers NRR, ARR, and Finance Monthly Close.
+    group: revenue_analytics
+    access: public
+    config:
+      contract:
+        enforced: true
+    columns:
+      - name: mrr_waterfall_id
+        data_type: string
+        constraints:
+          - type: not_null
+        tests:
+          - unique
+          - not_null
+      - name: account_id
+        data_type: string
+        constraints:
+          - type: not_null
+        tests:
+          - relationships:
+              to: ref('dim_accounts')
+              field: account_id
+      - name: segment
+        data_type: string
+      - name: acquisition_channel
+        data_type: string
+      - name: first_active_month
+        data_type: date
+      - name: revenue_month
+        data_type: date
+        constraints:
+          - type: not_null
+      - name: plan_tier
+        data_type: string
+      - name: seats
+        data_type: int
+      - name: beginning_mrr
+        data_type: float
+      - name: new_mrr
+        data_type: float
+      - name: expansion_mrr
+        data_type: float
+      - name: reactivation_mrr
+        data_type: float
+      - name: contraction_mrr
+        data_type: float
+      - name: churned_mrr
+        data_type: float
+      - name: ending_mrr
+        data_type: float
+      - name: movement_type
+        data_type: string
+        tests:
+          - accepted_values:
+              values: ["new", "expansion", "contraction", "churn", "reactivation", "retained", "inactive"]
+
+  - name: fct_cohort_retention
+    description: "Monthly Logo Retention (%) and Net Dollar Retention (%) by acquisition cohort."
+    group: revenue_analytics
+    access: public
+    columns:
+      - name: cohort_period_sk
+        tests:
+          - unique
+          - not_null
+      - name: months_since_signup
+        tests:
+          - not_null
+
+  - name: fct_unit_economics
+    description: "Monthly B2B SaaS Unit Economics (ARPA, CAC, Gross-Margin LTV, LTV/CAC, Payback Months) by segment."
+    group: revenue_analytics
+    access: public
+    columns:
+      - name: unit_economics_sk
+        tests:
+          - unique
+          - not_null

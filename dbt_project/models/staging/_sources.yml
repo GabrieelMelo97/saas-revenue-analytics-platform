@@ -1,0 +1,15 @@
+version: 2
+
+sources:
+  - name: raw_saas
+    description: "Validated raw B2B SaaS tables loaded via Write-Audit-Publish (Pandera contracts)."
+    schema: raw
+    tables:
+      - name: accounts
+        description: "B2B customer accounts with segment, industry, and acquisition channel."
+      - name: subscriptions
+        description: "Monthly active subscription snapshots with plan tier, seats, and MRR."
+      - name: invoices
+        description: "Monthly customer billing invoices and payment statuses."
+      - name: marketing_spend
+        description: "Monthly acquisition marketing spend by segment and channel."

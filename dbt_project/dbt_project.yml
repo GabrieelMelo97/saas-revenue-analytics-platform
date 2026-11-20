@@ -1,0 +1,32 @@
+name: "saas_revenue_analytics"
+version: "1.0.0"
+config-version: 2
+
+profile: "saas_revenue_analytics"
+
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+models:
+  saas_revenue_analytics:
+    staging:
+      +schema: staging
+      +materialized: view
+    intermediate:
+      +schema: intermediate
+      +materialized: view
+    marts:
+      +schema: marts
+      +materialized: table
+
+snapshots:
+  saas_revenue_analytics:
+    +target_schema: snapshots

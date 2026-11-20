@@ -1,0 +1,19 @@
+saas_revenue_analytics:
+  target: dev_local
+  outputs:
+    dev_local:
+      type: duckdb
+      path: "../data/warehouse/saas_revenue.duckdb"
+      threads: 4
+
+    gcp_bigquery:
+      type: bigquery
+      method: oauth
+      project: "{{ env_var('GCP_PROJECT_ID') }}"
+      dataset: "{{ env_var('GCP_BQ_DATASET_MARTS', 'marts') }}"
+      location: "{{ env_var('GCP_REGION', 'US') }}"
+      threads: 4
+      timeout_seconds: 300
+      priority: interactive
+      # FinOps Guardrail: cap per-query scan at 1 GB in dev/portfolio runs
+      maximum_bytes_billed: 1000000000

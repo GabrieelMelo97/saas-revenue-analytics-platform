@@ -1,0 +1,54 @@
+version: 2
+
+models:
+  - name: stg_accounts
+    description: "1:1 standardized view of B2B customer accounts."
+    columns:
+      - name: account_id
+        tests:
+          - unique
+          - not_null
+      - name: segment
+        tests:
+          - not_null
+          - accepted_values:
+              values: ["SMB", "Mid-Market", "Enterprise"]
+
+  - name: stg_subscriptions
+    description: "1:1 standardized view of active monthly subscription records."
+    columns:
+      - name: subscription_month_sk
+        tests:
+          - unique
+          - not_null
+      - name: account_id
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_accounts')
+              field: account_id
+      - name: plan_tier
+        tests:
+          - not_null
+          - accepted_values:
+              values: ["Starter", "Growth", "Scale", "Enterprise"]
+
+  - name: stg_invoices
+    description: "1:1 standardized view of monthly billing invoices."
+    columns:
+      - name: invoice_id
+        tests:
+          - unique
+          - not_null
+      - name: invoice_status
+        tests:
+          - accepted_values:
+              values: ["paid", "past_due", "open", "void"]
+
+  - name: stg_marketing_spend
+    description: "1:1 standardized view of monthly marketing spend for CAC calculations."
+    columns:
+      - name: spend_id
+        tests:
+          - unique
+          - not_null
