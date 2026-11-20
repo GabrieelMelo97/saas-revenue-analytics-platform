@@ -84,6 +84,10 @@ Todas as decisões técnicas críticas estão documentadas em [`docs/adr/`](./do
   - Teste singular contábil (`assert_mrr_waterfall_reconciles.sql`) com tolerância de **0,01** em 100% dos meses.
 - **Segurança & Qualidade IaC:** `terraform fmt -check`, `terraform validate` e **Trivy Config Scan** (HIGH/CRITICAL) executados em todo Pull Request.
 
+### Preview do Dashboard Executivo (Rodando no Cloud Run lendo do BigQuery `marts_dev`)
+
+![SaaS B2B Revenue Intelligence Dashboard](./docs/assets/dashboard-preview.png)
+
 ---
 
 ## 5. Estrutura do Repositório

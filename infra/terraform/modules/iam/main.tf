@@ -62,22 +62,21 @@ resource "google_bigquery_dataset_iam_member" "ingestion_bq_raw_editor" {
   member     = "serviceAccount:${google_service_account.ingestion.email}"
 }
 
-# dbt Runner SA: run BigQuery jobs, read raw, write staging/intermediate/snapshots/marts
+# dbt Runner SA: run BigQuery jobs, load raw from GCS, write staging/intermediate/snapshots/marts
+resource "google_storage_bucket_iam_member" "dbt_raw_bucket_admin" {
+  bucket = var.raw_bucket_name
+  role   = "roles/storage.objectAdmin"
+  member = "serviceAccount:${google_service_account.dbt_runner.email}"
+}
+
 resource "google_project_iam_member" "dbt_job_user" {
   project = var.project_id
   role    = "roles/bigquery.jobUser"
   member  = "serviceAccount:${google_service_account.dbt_runner.email}"
 }
 
-resource "google_bigquery_dataset_iam_member" "dbt_raw_viewer" {
-  project    = var.project_id
-  dataset_id = var.dataset_ids["raw"]
-  role       = "roles/bigquery.dataViewer"
-  member     = "serviceAccount:${google_service_account.dbt_runner.email}"
-}
-
 resource "google_bigquery_dataset_iam_member" "dbt_transform_editors" {
-  for_each   = toset(["staging", "intermediate", "snapshots", "marts"])
+  for_each   = toset(["raw", "staging", "intermediate", "snapshots", "marts"])
   project    = var.project_id
   dataset_id = var.dataset_ids[each.key]
   role       = "roles/bigquery.dataEditor"

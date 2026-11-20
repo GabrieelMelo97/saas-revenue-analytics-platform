@@ -1,4 +1,4 @@
-"""Executive BI-as-Code Dashboard (Streamlit) reading exclusively from governed dbt marts."""
+"""Executive BI-as-Code Dashboard (Streamlit) reading from governed dbt marts (DuckDB or BigQuery)."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 
-from saas_revenue.config import get_settings
+from saas_revenue.config import Settings, get_settings
 
 st.set_page_config(
     page_title="SaaS B2B Revenue Intelligence",
@@ -17,10 +17,7 @@ st.set_page_config(
 )
 
 
-@st.cache_data(ttl=60)
-def load_marts() -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    """Load governed mart tables from DuckDB."""
-    settings = get_settings()
+def _load_from_duckdb(settings: Settings) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     with duckdb.connect(str(settings.local_duckdb_path), read_only=True) as conn:
         waterfall = conn.execute(
             "SELECT * FROM main_marts.fct_mrr_waterfall ORDER BY revenue_month"
@@ -34,18 +31,57 @@ def load_marts() -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     return waterfall, cohorts, unit_econ
 
 
+def _load_from_bigquery(settings: Settings) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    from google.cloud import bigquery
+
+    client = bigquery.Client(project=settings.gcp_project_id)
+    # FinOps guardrail: cap every dashboard query at 1 GB scanned
+    job_config = bigquery.QueryJobConfig(maximum_bytes_billed=1_000_000_000)
+    ds = f"`{settings.gcp_project_id}.{settings.gcp_bq_dataset_marts}`"
+
+    waterfall = client.query(
+        f"SELECT * FROM {ds}.fct_mrr_waterfall ORDER BY revenue_month",
+        job_config=job_config,
+    ).to_dataframe()
+    cohorts = client.query(
+        f"SELECT * FROM {ds}.fct_cohort_retention ORDER BY cohort_month, months_since_signup",
+        job_config=job_config,
+    ).to_dataframe()
+    unit_econ = client.query(
+        f"SELECT * FROM {ds}.fct_unit_economics ORDER BY revenue_month",
+        job_config=job_config,
+    ).to_dataframe()
+    return waterfall, cohorts, unit_econ
+
+
+@st.cache_data(ttl=300)
+def load_marts(target_backend: str) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """Load governed mart tables from DuckDB (local) or BigQuery (GCP)."""
+    settings = get_settings()
+    if target_backend == "gcp":
+        return _load_from_bigquery(settings)
+    return _load_from_duckdb(settings)
+
+
 def main() -> None:
+    settings = get_settings()
+    engine_label = (
+        f"Google Cloud BigQuery ({settings.gcp_bq_dataset_marts})"
+        if settings.target_backend == "gcp"
+        else "Local DuckDB (dev_local)"
+    )
+
     st.title("📊 SaaS B2B Revenue Intelligence Platform")
     st.caption(
-        "Single Source of Truth powered by dbt Core (Enforced Contracts & SCD2) + DuckDB/BigQuery"
+        f"Single Source of Truth powered by dbt Core (Enforced Contracts & SCD2) · Engine: **{engine_label}**"
     )
 
     try:
-        waterfall_df, cohorts_df, unit_df = load_marts()
+        waterfall_df, cohorts_df, unit_df = load_marts(settings.target_backend)
     except Exception as exc:
         st.error(
-            f"Não foi possível carregar os marts do DuckDB ({exc}). "
-            "Execute `python -m saas_revenue.ingest` e `dbt build` primeiro."
+            f"Não foi possível carregar os marts ({engine_label}): {exc}. "
+            "Verifique se o pipeline de ingestão e o `dbt build` foram executados."
         )
         return
 
@@ -158,6 +194,24 @@ def main() -> None:
         labels={"x": "Meses desde Aquisição", "y": "Coorte", "color": "NRR (%)"},
     )
     st.plotly_chart(fig_cohort, use_container_width=True)
+
+    st.subheader("Unit Economics por Segmento (Último Mês)")
+    st.dataframe(
+        latest_unit[
+            [
+                "segment",
+                "active_accounts",
+                "new_accounts",
+                "arpa",
+                "cac",
+                "estimated_ltv",
+                "ltv_to_cac_ratio",
+                "cac_payback_months",
+            ]
+        ].sort_values("segment"),
+        use_container_width=True,
+        hide_index=True,
+    )
 
 
 if __name__ == "__main__":

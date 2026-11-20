@@ -1,0 +1,15 @@
+.git/
+.github/
+.venv/
+.pytest_cache/
+.ruff_cache/
+data/
+docs/
+infra/
+tests/
+dbt_project/target/
+dbt_project/logs/
+dbt_project/profiles.yml
+.env
+*.tfstate*
+*.tfvars

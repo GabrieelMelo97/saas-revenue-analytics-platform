@@ -10,8 +10,8 @@ saas_revenue_analytics:
       type: bigquery
       method: oauth
       project: "{{ env_var('GCP_PROJECT_ID') }}"
-      dataset: "{{ env_var('GCP_BQ_DATASET_MARTS', 'marts') }}"
-      location: "{{ env_var('GCP_REGION', 'US') }}"
+      dataset: "{{ env_var('GCP_BQ_DATASET_MARTS', 'marts_dev') }}"
+      location: "{{ env_var('GCP_BQ_LOCATION', 'US') }}"
       threads: 4
       timeout_seconds: 300
       priority: interactive

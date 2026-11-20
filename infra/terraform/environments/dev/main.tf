@@ -42,6 +42,7 @@ module "compute" {
   region              = var.region
   environment         = var.environment
   dbt_runner_sa_email = module.iam.dbt_runner_sa_email
+  bi_reader_sa_email  = module.iam.bi_reader_sa_email
   raw_bucket_name     = module.storage.raw_bucket_name
   bq_dataset_raw      = module.bigquery.dataset_ids["raw"]
   bq_dataset_marts    = module.bigquery.dataset_ids["marts"]

@@ -3,7 +3,7 @@ version: 2
 sources:
   - name: raw_saas
     description: "Validated raw B2B SaaS tables loaded via Write-Audit-Publish (Pandera contracts)."
-    schema: raw
+    schema: "{{ env_var('GCP_BQ_DATASET_RAW', 'raw') }}"
     tables:
       - name: accounts
         description: "B2B customer accounts with segment, industry, and acquisition channel."
