@@ -1,0 +1,56 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+dist/
+build/
+*.egg-info/
+
+# Environment & Secrets (NEVER COMMIT)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*credentials*.json
+*service-account*.json
+*sa-key*.json
+adc.json
+
+# Data & Local Warehouses
+data/
+*.duckdb
+*.duckdb.wal
+*.parquet
+*.db
+*.sqlite*
+
+# dbt
+dbt_project/target/
+dbt_project/dbt_packages/
+dbt_project/logs/
+dbt_project/profiles.yml
+
+# Terraform / IaC Secrets & State (NEVER COMMIT)
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+crash.log
+override.tf
+override.tf.json
+backend.tf
+!backend.tf.example
+
+# OS & Editors
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
