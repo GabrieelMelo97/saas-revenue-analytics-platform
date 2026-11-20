@@ -1,0 +1,9 @@
+# Copy to terraform.tfvars (NEVER commit real terraform.tfvars!)
+project_id          = "your-gcp-project-id"
+region              = "us-central1"
+bq_location         = "US"
+environment         = "dev"
+container_image     = "us-central1-docker.pkg.dev/your-gcp-project-id/saas-revenue-dev/dbt-runner:latest"
+enable_budget_alert = false
+billing_account_id  = ""
+monthly_budget_usd  = 10
