@@ -1,0 +1,31 @@
+version: 2
+
+exposures:
+  - name: executive_revenue_dashboard
+    label: Executive SaaS Revenue Dashboard (Streamlit BI-as-Code)
+    type: dashboard
+    maturity: high
+    description: >-
+      Executive dashboard tracking MRR Waterfall, ARR, Net Revenue Retention (NRR),
+      Cohort Retention Heatmaps, and LTV/CAC Unit Economics.
+    depends_on:
+      - ref('fct_mrr_waterfall')
+      - ref('fct_cohort_retention')
+      - ref('fct_unit_economics')
+      - ref('dim_accounts')
+    owner:
+      name: Gabriel Melo
+      email: gabrielmelo_@outlook.com
+
+  - name: finance_monthly_close
+    label: Finance Monthly Revenue Close & Board Pack
+    type: analysis
+    maturity: high
+    description: >-
+      Reconciled monthly MRR movement ledger consumed by Finance & FP&A for investor reporting.
+    depends_on:
+      - ref('fct_mrr_waterfall')
+      - ref('dim_accounts')
+    owner:
+      name: Gabriel Melo
+      email: gabrielmelo_@outlook.com

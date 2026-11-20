@@ -1,0 +1,9 @@
+[sqlfluff]
+dialect = duckdb
+templater = jinja
+max_line_length = 110
+exclude_rules = layout.indent, aliasing.column
+
+[sqlfluff:indentation]
+indent_unit = space
+tab_space_size = 4
