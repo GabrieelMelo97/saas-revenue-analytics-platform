@@ -29,4 +29,4 @@ models:
 
 snapshots:
   saas_revenue_analytics:
-    +target_schema: snapshots
+    +target_schema: "{{ 'snapshots_' ~ env_var('APP_ENV', 'dev') if target.name == 'gcp_bigquery' else 'snapshots' }}"

@@ -91,6 +91,10 @@ resource "google_cloud_run_v2_job" "dbt_pipeline" {
           value = var.region
         }
         env {
+          name  = "GCP_BQ_LOCATION"
+          value = "US"
+        }
+        env {
           name  = "GCP_RAW_BUCKET"
           value = var.raw_bucket_name
         }
